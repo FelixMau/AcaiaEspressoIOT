@@ -63,8 +63,8 @@
 #define USE_INTRANET
 
 // replace this with your homes intranet connect parameters
-#define LOCAL_SSID "your_home_ssid"
-#define LOCAL_PASS "your_home_passwrord"
+#define LOCAL_SSID "MagentaWLAN-X85R"
+#define LOCAL_PASS "abeRbr!nGb!eRm!T"
 
 // once  you are read to go live these settings are what you client will connect to
 #define AP_SSID "TestWebSite"
@@ -80,6 +80,7 @@
 // variables to store measure data and sensor states
 int BitsA0 = 0, BitsA1 = 0;
 float VoltsA0 = 0, VoltsA1 = 0;
+int new_weight = 0;
 int FanSpeed = 0;
 bool LED0 = false, SomeOutput = false;
 uint32_t SensorUpdate = 0;
@@ -143,7 +144,7 @@ void setup() {
   Actual_IP = WiFi.localIP();
 #endif
 
-  // if you don't have #define USE_INTRANET, here's where you will creat and access point
+  // if you don't have #define USE_INTRANET, here's where you will create and access point
   // an intranet with no internet connection. But Clients can connect to your intranet and see
   // the web page you are about to serve up
 #ifndef USE_INTRANET
@@ -181,6 +182,22 @@ void setup() {
 }
 
 void loop() {
+    if (!scale.isConnected()){
+        digitalWrite(LED_BUILTIN, HIGH);  // turn the LED on (HIGH is the voltage level)
+        BLE.begin();
+        // Optionally add your Mac Address as an argument: acaia.init("##:##:##:##:##:##");
+        scale.init();
+        digitalWrite(LED_BUILTIN, LOW);
+  }
+  if (scale.heartbeatRequired()) {
+    scale.heartbeat();
+  }
+
+  // always call newWeightAvailable to actually receive the datapoint from the scale,
+  // otherwise getWeight() will return stale data
+  if (scale.newWeightAvailable()) {
+    new_weight = scale.getWeight();
+  }
 
   // you main loop that measures, processes, runs code, etc.
   // note that handling the "on" strings from the web page are NOT in the loop
@@ -196,7 +213,7 @@ void loop() {
     BitsA1 = analogRead(PIN_A1);
 
     // standard converion to go from 12 bit resolution reads to volts on an ESP
-    VoltsA0 = BitsA0 * 3.3 / 4096;
+    VoltsA0 = new_weight
     VoltsA1 = BitsA1 * 3.3 / 4096;
 
   }
